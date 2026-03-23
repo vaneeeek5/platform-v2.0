@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: platform-app
+    container_name: platform-v2-app
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     env_file: .env
     depends_on:
       db:
@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
-    container_name: platform-worker
+    container_name: platform-v2-worker
     env_file: .env
     depends_on:
       db:
@@ -35,15 +35,12 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: platform-db
-    environment:
-      POSTGRES_DB: marketing_platform
-      POSTGRES_USER: nextjs
-      POSTGRES_PASSWORD: nextjs_password
+    container_name: platform-v2-db
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nextjs -d marketing_platform"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nextjs} -d ${POSTGRES_DB:-marketing_platform}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -53,7 +50,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: platform-redis
+    container_name: platform-v2-redis
     volumes:
       - redis_data:/data
     healthcheck:
@@ -66,8 +63,8 @@ services:
     restart: unless-stopped
 
   cloudflare-tunnel:
-    image: cloudflare/cloudflared:2025.4.0
-    container_name: platform-tunnel
+    image: cloudflare/cloudflared:latest
+    container_name: platform-v2-tunnel
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
