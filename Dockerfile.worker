@@ -3,8 +3,8 @@ FROM node:20-alpine
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+COPY package.json ./
+RUN npm install --omit=dev --legacy-peer-deps
 
 COPY src/workers ./src/workers
 COPY src/lib ./src/lib
@@ -12,4 +12,4 @@ COPY src/db ./src/db
 
 ENV NODE_ENV=production
 
-CMD ["node", "src/workers/index.js"]
+CMD ["node", "--experimental-specifier-resolution=node", "src/workers/index.js"]
