@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: platform-app
+    ports:
+      - "3000:3000"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - platform_network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: platform-worker
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - platform_network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: platform-db
+    environment:
+      POSTGRES_DB: marketing_platform
+      POSTGRES_USER: nextjs
+      POSTGRES_PASSWORD: nextjs_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextjs -d marketing_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - platform_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: platform-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - platform_network
+    restart: unless-stopped
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:2025.4.0
+    container_name: platform-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    networks:
+      - platform_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  platform_network:
+    driver: bridge

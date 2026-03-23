@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  app-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: platform-app-staging
+    ports:
+      - "3001:3000"
+    env_file: .env.staging
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - platform_staging_network
+    restart: unless-stopped
+
+  worker-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: platform-worker-staging
+    env_file: .env.staging
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - platform_staging_network
+    restart: unless-stopped
+
+  db-staging:
+    image: postgres:15-alpine
+    container_name: platform-db-staging
+    environment:
+      POSTGRES_DB: marketing_platform_staging
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_STAGING}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d marketing_platform_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - platform_staging_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: platform-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - platform_staging_network
+    restart: unless-stopped
+
+  cloudflare-tunnel-staging:
+    image: cloudflare/cloudflared:2025.4.0
+    container_name: platform-tunnel-staging
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN_STAGING}
+    depends_on:
+      - app-staging
+    networks:
+      - platform_staging_network
+    restart: unless-stopped
+
+volumes:
+  postgres_staging_data:
+  redis_data:
+
+networks:
+  platform_staging_network:
+    driver: bridge
