@@ -2,8 +2,9 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  experimental: {
-    serverComponentsExternalPackages: ['pg', 'ioredis', 'bullmq', 'bcryptjs'],
+  serverExternalPackages: ['pg', 'ioredis', 'bullmq', 'bcryptjs'],
+  turbopack: {
+    root: '/private',
   },
 }
 
