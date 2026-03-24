@@ -19,6 +19,22 @@ export default function SettingsPage() {
   const [params, setParams] = useState<{ success?: string; error?: string }>({})
 
   useEffect(() => {
+    const activeId = localStorage.getItem('activeProjectId')
+    if (activeId) {
+      fetch(`/api/projects?id=${activeId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data) {
+            setSettings({
+              metrikaToken: data.metrikaToken || '',
+              metrikaCounterId: data.metrikaCounterId || '',
+              directToken: data.directToken || '',
+              openrouterKey: data.openrouterKey || '',
+            })
+          }
+        })
+    }
+
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('success') || urlParams.get('error')) {
       setParams({
@@ -30,8 +46,19 @@ export default function SettingsPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    const activeId = localStorage.getItem('activeProjectId')
+    if (!activeId) return
+
+    const res = await fetch(`/api/projects?id=${activeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    })
+
+    if (res.ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    }
   }
 
   function handleConnectYandex() {

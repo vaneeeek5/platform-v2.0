@@ -1,16 +1,17 @@
 import axios from 'axios'
 
 const DIRECT_API = 'https://api.direct.yandex.com/json/v5'
-const OAUTH_TOKEN = process.env.YANDEX_DIRECT_TOKEN!
 
-const client = axios.create({
-  baseURL: DIRECT_API,
-  headers: {
-    Authorization: `Bearer ${OAUTH_TOKEN}`,
-    'Client-Login': 'agrom',
-    'Accept-Language': 'ru',
-  },
-})
+function getClient(token: string) {
+  return axios.create({
+    baseURL: DIRECT_API,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Client-Login': 'agrom',
+      'Accept-Language': 'ru',
+    },
+  })
+}
 
 export type DirectCampaignStat = {
   date: string
@@ -24,10 +25,13 @@ export type DirectCampaignStat = {
 }
 
 export async function getCampaignStats(
+  token: string,
   dateFrom: string,
   dateTo: string
 ): Promise<DirectCampaignStat[]> {
+  const client = getClient(token)
   const body = {
+    // ... rest of body ...
     method: 'get',
     params: {
       SelectionCriteria: {
@@ -70,7 +74,8 @@ export async function getCampaignStats(
     })
 }
 
-export async function getCampaigns(): Promise<{ id: string; name: string; status: string }[]> {
+export async function getCampaigns(token: string): Promise<{ id: string; name: string; status: string }[]> {
+  const client = getClient(token)
   const res = await client.post('', {
     method: 'get',
     params: {

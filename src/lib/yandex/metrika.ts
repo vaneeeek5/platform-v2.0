@@ -1,14 +1,15 @@
 import axios from 'axios'
 
 const METRIKA_API = 'https://api-metrika.yandex.net/stat/v1'
-const OAUTH_TOKEN = process.env.YANDEX_METRIKA_TOKEN!
 
-const client = axios.create({
-  baseURL: METRIKA_API,
-  headers: {
-    Authorization: `OAuth ${OAUTH_TOKEN}`,
-  },
-})
+function getClient(token: string) {
+  return axios.create({
+    baseURL: METRIKA_API,
+    headers: {
+      Authorization: `OAuth ${token}`,
+    },
+  })
+}
 
 export type MetrikaGoal = {
   id: number
@@ -23,17 +24,20 @@ export type MetrikaConversion = {
   revenue: number
 }
 
-export async function getGoals(counterId: string): Promise<MetrikaGoal[]> {
+export async function getGoals(token: string, counterId: string): Promise<MetrikaGoal[]> {
+  const client = getClient(token)
   const res = await client.get(`/management/v1/counter/${counterId}/goals`)
   return res.data.goals || []
 }
 
 export async function getConversions(
+  token: string,
   counterId: string,
   dateFrom: string,
   dateTo: string,
   goalIds: string[]
 ): Promise<MetrikaConversion[]> {
+  const client = getClient(token)
   const res = await client.get('/data', {
     params: {
       ids: counterId,
@@ -55,10 +59,12 @@ export async function getConversions(
 }
 
 export async function getLeads(
+  token: string,
   counterId: string,
   dateFrom: string,
   dateTo: string
 ): Promise<Record<string, unknown>[]> {
+  const client = getClient(token)
   const res = await client.get('/data', {
     params: {
       ids: counterId,

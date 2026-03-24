@@ -25,14 +25,19 @@ const metrikaWorker = new Worker(
     const project = await db.query.projects.findFirst({
       where: eq(schema.projects.id, projectId),
     })
-    if (!project?.metrikaCounterId || !project.metrikaToken) {
-      throw new Error('Metrika not configured for this project')
+    
+    // Fallback to global token if project-specific one is missing
+    const token = project?.metrikaToken || process.env.YANDEX_METRIKA_TOKEN
+    const counterId = project?.metrikaCounterId
+
+    if (!counterId || !token) {
+      throw new Error(`Metrika not configured for project ${projectId}. Need Counter ID and Token.`)
     }
 
     // Get goals
-    const goals = await getGoals(project.metrikaCounterId)
+    const goals = await getGoals(token, counterId)
 
-    // Upsert goals
+    // ... sync goals logic ...
     for (const goal of goals) {
       await db
         .insert(schema.goals)
@@ -50,7 +55,8 @@ const metrikaWorker = new Worker(
 
     // Get conversions
     const goalIds = goals.map((g) => String(g.id))
-    const conversions = await getConversions(project.metrikaCounterId, dateFrom, dateTo, goalIds)
+    const conversions = await getConversions(token, counterId, dateFrom, dateTo, goalIds)
+    // ... rest of conversions logic ...
 
     let processed = 0
     for (const conv of conversions) {
@@ -81,7 +87,19 @@ const directWorker = new Worker(
     const { projectId, dateFrom, dateTo } = job.data
     console.log(`[Worker] Syncing Direct for project ${projectId}`)
 
-    const stats = await getCampaignStats(dateFrom, dateTo)
+    const project = await db.query.projects.findFirst({
+      where: eq(schema.projects.id, projectId),
+    })
+    
+    // Fallback to global token
+    const token = project?.directToken || process.env.YANDEX_DIRECT_TOKEN
+    
+    if (!token) {
+      throw new Error(`Direct Token not found for project ${projectId} (and no global fallback).`)
+    }
+
+    const stats = await getCampaignStats(token, dateFrom, dateTo)
+    // ... rest of stats logic ...
     let processed = 0
 
     for (const stat of stats) {
