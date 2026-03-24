@@ -4,17 +4,7 @@ import { verifyToken } from '@/lib/auth'
 // Protect all platform routes and admin routes
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/leads/:path*',
-    '/expenses/:path*',
-    '/reports/:path*',
-    '/projects/:path*',
-    '/settings/:path*',
-    '/p/:path*',
-    '/admin/:path*',
-    '/api/leads/:path*',
-    '/api/reports/:path*',
-    '/api/sync/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|login|api/auth).*)',
   ],
 }
 
