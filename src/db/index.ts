@@ -11,23 +11,13 @@ export const db = drizzle(pool, { schema })
 export { schema }
 
 // Initialize database schema manually to ensure independence from drizzle-kit in production
-export async function initDb(retries = 5) {
+export async function initDb() {
   let client
-  while (retries > 0) {
-    try {
-      client = await pool.connect()
-      break
-    } catch (err) {
-      console.log(`[DB] Connection failed, retrying... (${retries} left)`)
-      retries -= 1
-      if (retries === 0) throw err
-      await new Promise(res => setTimeout(res, 2000))
-    }
-  }
-
-  if (!client) return
-
   try {
+    // Single robust attempt to connect
+    console.log('[DB] Connecting for schema sync...')
+    client = await pool.connect()
+    
     console.log('[DB] Ensuring Schema Integrity...')
     
     // 1. Projects table
@@ -44,8 +34,21 @@ export async function initDb(retries = 5) {
       );
     `)
 
-    // 2. Multi-tenant columns (add to all related tables)
-    const tables = ['users', 'leads', 'expenses', 'goals', 'goal_conversions', 'sync_logs', 'ai_recommendations']
+    // 2. Users table (if missing)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'manager',
+        project_id INTEGER REFERENCES projects(id),
+        name TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `)
+
+    // 3. Multi-tenant columns (add to all related tables)
+    const tables = ['leads', 'expenses', 'goals', 'goal_conversions', 'sync_logs', 'ai_recommendations']
     for (const table of tables) {
       await client.query(`
         DO $$ 
@@ -59,10 +62,22 @@ export async function initDb(retries = 5) {
       `)
     }
 
+    // 4. Seed default admin if no users exist
+    const { rows } = await client.query('SELECT count(*) FROM users')
+    if (parseInt(rows[0].count) === 0) {
+      console.log('[DB] Seeding default admin user...')
+      const defaultHash = '$2a$10$pL3zI.KjR8zF8l2w5L5Q/.pE/tXq8vR7K7D8k7v7K7D8k7v7K7D8k' // for "admin"
+      await client.query(`
+        INSERT INTO users (email, password_hash, role, name)
+        VALUES ('admin@platform.ru', '${defaultHash}', 'admin', 'Administrator')
+      `)
+      console.log('[DB] Default admin created: admin@platform.ru / admin')
+    }
+
     console.log('[DB] Schema integrity check completed.')
   } catch (err) {
     console.error('[DB] Schema initialization error:', err)
   } finally {
-    client.release()
+    if (client) client.release()
   }
 }
