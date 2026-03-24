@@ -9,6 +9,10 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     env_file: .env
+    environment:
+      - DATABASE_URL=postgresql://nextjs:nextjs_password@db:5432/marketing_platform
+      - REDIS_URL=redis://redis:6379/0
+      - NODE_ENV=production
     depends_on:
       db:
         condition: service_healthy
@@ -24,6 +28,10 @@ services:
       dockerfile: Dockerfile.worker
     container_name: platform-v2-worker
     env_file: .env
+    environment:
+      - DATABASE_URL=postgresql://nextjs:nextjs_password@db:5432/marketing_platform
+      - REDIS_URL=redis://redis:6379/0
+      - NODE_ENV=production
     depends_on:
       db:
         condition: service_healthy

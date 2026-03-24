@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     res.cookies.set('platform_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to false to allow HTTP access (private network)
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
