@@ -71,7 +71,7 @@ const metrikaWorker = new Worker(
 
     return { processed }
   },
-  { connection: redis, concurrency: 2 }
+  { connection: bullConnection, concurrency: 2 }
 )
 
 // ---- Direct Sync Worker ----
@@ -101,7 +101,7 @@ const directWorker = new Worker(
 
     return { processed }
   },
-  { connection: redis, concurrency: 2 }
+  { connection: bullConnection, concurrency: 2 }
 )
 
 // ---- Error handlers ----
