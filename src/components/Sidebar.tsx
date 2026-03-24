@@ -76,6 +76,16 @@ export function Sidebar() {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
+        <Link href="/projects" style={{ 
+          display: 'block', 
+          marginTop: '0.5rem', 
+          fontSize: '0.75rem', 
+          color: 'var(--primary)', 
+          textDecoration: 'none',
+          fontWeight: '500'
+        }}>
+          ⚙️ Управление клиентами
+        </Link>
       </div>
 
       <div style={{ flex: 1 }}>

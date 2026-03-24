@@ -8,6 +8,7 @@ export const config = {
     '/leads/:path*',
     '/expenses/:path*',
     '/reports/:path*',
+    '/projects/:path*',
     '/settings/:path*',
     '/p/:path*',
     '/admin/:path*',
