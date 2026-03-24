@@ -40,7 +40,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nextjs} -d ${POSTGRES_DB:-marketing_platform}"]
+      test: ["CMD-SHELL", "pg_isready -U platform_v2 -d marketing_platform_v2"]
       interval: 5s
       timeout: 5s
       retries: 10

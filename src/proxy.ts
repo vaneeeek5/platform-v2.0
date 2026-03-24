@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-// Slug routing: /p/[slug]/...
-// Admin routes: /admin/...
+// Protect all platform routes and admin routes
 export const config = {
-  matcher: ['/p/:path*', '/admin/:path*', '/api/p/:path*', '/api/admin/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/leads/:path*',
+    '/expenses/:path*',
+    '/reports/:path*',
+    '/settings/:path*',
+    '/p/:path*',
+    '/admin/:path*',
+    '/api/leads/:path*',
+    '/api/reports/:path*',
+    '/api/sync/:path*',
+  ],
 }
 
 export async function proxy(req: NextRequest) {
@@ -13,7 +23,7 @@ export async function proxy(req: NextRequest) {
   const token = req.cookies.get('platform_token')?.value
   const payload = token ? await verifyToken(token) : null
 
-  // Not authenticated
+  // Not authenticated — redirect to login
   if (!payload) {
     const loginUrl = new URL('/login', req.url)
     loginUrl.searchParams.set('from', pathname)
@@ -22,7 +32,7 @@ export async function proxy(req: NextRequest) {
 
   // Admin-only routes
   if (pathname.startsWith('/admin') && payload.role !== 'admin') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url))
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   // Pass user info via headers to server components
