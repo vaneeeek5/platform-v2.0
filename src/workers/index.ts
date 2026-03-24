@@ -6,10 +6,15 @@ import { getCampaignStats } from '@/lib/yandex/direct'
 import { getConversions, getGoals } from '@/lib/yandex/metrika'
 import { eq } from 'drizzle-orm'
 
+// Parse Redis URL into host/port for BullMQ
+// (avoids ioredis version type conflict — BullMQ bundles its own ioredis)
+const redisUrl = new URL(process.env.REDIS_URL || 'redis://redis:6379/0')
+const bullConnection = { host: redisUrl.hostname, port: parseInt(redisUrl.port || '6379') }
+
 // ---- Queues ----
-export const syncMetrikaQueue = new Queue('sync-metrika', { connection: redis })
-export const syncDirectQueue = new Queue('sync-direct', { connection: redis })
-export const aiQueue = new Queue('ai-recommendations', { connection: redis })
+export const syncMetrikaQueue = new Queue('sync-metrika', { connection: bullConnection })
+export const syncDirectQueue = new Queue('sync-direct', { connection: bullConnection })
+export const aiQueue = new Queue('ai-recommendations', { connection: bullConnection })
 
 // ---- Metrika Sync Worker ----
 const metrikaWorker = new Worker(
