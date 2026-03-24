@@ -1,9 +1,11 @@
 import { Worker, Queue, Job } from 'bullmq'
-import { db } from '@/db'
-import { schema } from '@/db'
+import { db, schema, initDb } from '@/db'
 import { getCampaignStats } from '@/lib/yandex/direct'
 import { getConversions, getGoals } from '@/lib/yandex/metrika'
 import { eq } from 'drizzle-orm'
+
+// Auto-initialize DB on worker start
+initDb().catch(console.error)
 
 // Parse Redis URL into host/port for BullMQ
 // (avoids ioredis version type conflict — BullMQ bundles its own ioredis)

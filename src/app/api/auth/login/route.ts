@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/db'
-import { schema } from '@/db'
+import { db, initDb, schema } from '@/db'
 import { signToken } from '@/lib/auth'
 import { compare } from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 
 export async function POST(req: NextRequest) {
   try {
+    await initDb() // Ensure tables exist
     const { email, password } = await req.json()
 
     if (!email || !password) {
