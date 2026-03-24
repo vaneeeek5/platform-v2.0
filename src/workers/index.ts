@@ -1,5 +1,4 @@
 import { Worker, Queue, Job } from 'bullmq'
-import { redis } from '@/lib/cache'
 import { db } from '@/db'
 import { schema } from '@/db'
 import { getCampaignStats } from '@/lib/yandex/direct'
