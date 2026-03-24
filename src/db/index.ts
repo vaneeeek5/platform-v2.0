@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import * as schema from './schema'
+import { hashSync } from 'bcryptjs'
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL!,
@@ -62,17 +63,15 @@ export async function initDb() {
       `)
     }
 
-    // 4. Seed default admin if no users exist
-    const { rows } = await client.query('SELECT count(*) FROM users')
-    if (parseInt(rows[0].count) === 0) {
-      console.log('[DB] Seeding default admin user...')
-      const defaultHash = '$2a$10$pL3zI.KjR8zF8l2w5L5Q/.pE/tXq8vR7K7D8k7v7K7D8k7v7K7D8k' // for "admin"
-      await client.query(`
-        INSERT INTO users (email, password_hash, role, name)
-        VALUES ('admin@platform.ru', '${defaultHash}', 'admin', 'Administrator')
-      `)
-      console.log('[DB] Default admin created: admin@platform.ru / admin')
-    }
+    // 4. Seed/Update default admin
+    console.log('[DB] Ensuring admin user exists...')
+    const adminHash = hashSync('admin', 10)
+    await client.query(`
+      INSERT INTO users (email, password_hash, role, name)
+      VALUES ('admin@platform.ru', '${adminHash}', 'admin', 'Administrator')
+      ON CONFLICT (email) DO UPDATE SET password_hash = '${adminHash}'
+    `)
+    console.log('[DB] Admin user ready: admin@platform.ru / admin')
 
     console.log('[DB] Schema integrity check completed.')
   } catch (err) {
