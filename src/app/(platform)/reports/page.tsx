@@ -22,8 +22,9 @@ export default function ReportsPage() {
   const [to, setTo] = useState(() => new Date().toISOString().split('T')[0])
 
   function load() {
+    const activeId = localStorage.getItem('activeProjectId') || '1'
     setLoading(true)
-    fetch(`/api/reports?projectId=1&from=${from}&to=${to}`)
+    fetch(`/api/reports?projectId=${activeId}&from=${from}&to=${to}`)
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))

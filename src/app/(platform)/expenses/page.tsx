@@ -16,7 +16,8 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/reports?projectId=1')
+    const activeId = localStorage.getItem('activeProjectId') || '1'
+    fetch(`/api/reports?projectId=${activeId}`)
       .then((r) => r.json())
       .then(() => setLoading(false))
       .catch(() => setLoading(false))
@@ -36,10 +37,11 @@ export default function ExpensesPage() {
         <button
           className="btn btn-primary"
           onClick={async () => {
+            const activeId = localStorage.getItem('activeProjectId') || '1'
             await fetch('/api/sync/direct', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId: 1 }),
+              body: JSON.stringify({ projectId: parseInt(activeId) }),
             })
             alert('Синхронизация Директа запущена!')
           }}

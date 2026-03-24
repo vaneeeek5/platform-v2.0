@@ -16,12 +16,31 @@ export default function SettingsPage() {
     openrouterKey: '',
   })
   const [saved, setSaved] = useState(false)
+  const [params, setParams] = useState<{ success?: string; error?: string }>({})
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('success') || urlParams.get('error')) {
+      setParams({
+        success: urlParams.get('success') || undefined,
+        error: urlParams.get('error') || undefined,
+      })
+    }
+  }, [])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    // In production, this would call an API route to update project settings
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  function handleConnectYandex() {
+    const activeId = localStorage.getItem('activeProjectId')
+    if (!activeId) {
+      alert('Сначала выберите или создайте клиента!')
+      return
+    }
+    window.location.href = `/api/auth/yandex/login?projectId=${activeId}`
   }
 
   return (
@@ -33,32 +52,57 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {params.success && (
+        <div className="card" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'var(--success)', color: 'var(--success)', marginBottom: '1.5rem' }}>
+          ✅ Яндекс успешно подключен! Токены обновлены.
+        </div>
+      )}
+      {params.error && (
+        <div className="card" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--danger)', color: 'var(--danger)', marginBottom: '1.5rem' }}>
+          ❌ Ошибка авторизации: {params.error}
+        </div>
+      )}
+
       <form onSubmit={handleSave} style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div className="card">
-          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📊 Яндекс.Метрика
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📊 Яндекс.Метрика & Директ
+            </h2>
+            <button 
+              type="button" 
+              className="btn btn-primary btn-sm" 
+              onClick={handleConnectYandex}
+              style={{ background: 'linear-gradient(135deg, #f33, #f00)' }}
+            >
+              🔗 Подключить Яндекс
+            </button>
+          </div>
+          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-                OAuth Token
-              </label>
-              <input
-                className="input"
-                value={settings.metrikaToken}
-                onChange={(e) => setSettings((s) => ({ ...s, metrikaToken: e.target.value }))}
-                placeholder="y0__xXX..."
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-                ID Счётчика
+                ID Счётчика Метрики
               </label>
               <input
                 className="input"
                 value={settings.metrikaCounterId}
                 onChange={(e) => setSettings((s) => ({ ...s, metrikaCounterId: e.target.value }))}
                 placeholder="93215285"
+              />
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
+              💡 Рекомендуется использовать кнопку «Подключить Яндекс» выше для автоматического получения токенов.
+            </p>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
+                Ручной ввод OAuth Token (необязательно)
+              </label>
+              <input
+                className="input"
+                value={settings.metrikaToken}
+                onChange={(e) => setSettings((s) => ({ ...s, metrikaToken: e.target.value }))}
+                placeholder="y0__xXX..."
               />
             </div>
           </div>

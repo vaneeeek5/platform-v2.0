@@ -13,24 +13,26 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
-    fetch('/api/reports?projectId=1')
+    const activeId = localStorage.getItem('activeProjectId') || '1'
+    fetch(`/api/reports?projectId=${activeId}`)
       .then((r) => r.json())
       .then((d) => { setKpi(d.kpi); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
   async function syncAll() {
+    const activeId = localStorage.getItem('activeProjectId') || '1'
     setSyncing(true)
     await Promise.all([
       fetch('/api/sync/metrika', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: 1 }),
+        body: JSON.stringify({ projectId: parseInt(activeId) }),
       }),
       fetch('/api/sync/direct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: 1 }),
+        body: JSON.stringify({ projectId: parseInt(activeId) }),
       }),
     ])
     setSyncing(false)

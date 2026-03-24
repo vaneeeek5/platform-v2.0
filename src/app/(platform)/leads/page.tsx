@@ -33,7 +33,8 @@ export default function LeadsPage() {
   const [editNote, setEditNote] = useState('')
 
   useEffect(() => {
-    fetch('/api/leads?projectId=1&limit=100')
+    const activeId = localStorage.getItem('activeProjectId') || '1'
+    fetch(`/api/leads?projectId=${activeId}&limit=100`)
       .then((r) => r.json())
       .then((d) => { setLeads(d.leads || []); setLoading(false) })
       .catch(() => setLoading(false))
