@@ -1,4 +1,5 @@
-export const isStaging = process.env.NODE_ENV === 'staging'
+// Use APP_ENV for staging check since NODE_ENV only allows 'development' | 'production' | 'test'
+export const isStaging = (process.env.APP_ENV ?? process.env.NODE_ENV) === 'staging'
 export const isProduction = process.env.NODE_ENV === 'production'
 export const isDevelopment = process.env.NODE_ENV === 'development'
 
